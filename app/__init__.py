@@ -1,6 +1,7 @@
 from fastapi import APIRouter
-from app.auth.auth_backend import router as auth_router
+from app.table.api import router as table_router
 
 router = APIRouter()
 
+router.include_router(table_router, prefix="/table", tags=["Table"])
 
