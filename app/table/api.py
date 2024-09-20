@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.table.crud import get_all_tables, get_table, create_table, update_table, delete_table
@@ -18,7 +20,7 @@ async def create_table_endpoint(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.get("/", response_model=list[TableResponse])
+@router.get("/", response_model=List[TableResponse])
 async def get_all_tables_endpoint(
         db=Depends(get_async_session)
 ):
