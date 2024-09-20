@@ -10,7 +10,7 @@ class Table(Base):
 
     id: Mapped[int] = mapped_column(Integer, unique=True, index=True, nullable=False, primary_key=True)
     name: Mapped[str] = mapped_column(String(length=255), nullable=False, unique=True)
-    status: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    status: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True),
                                                           default=lambda: datetime.datetime.now(datetime.timezone.utc))
