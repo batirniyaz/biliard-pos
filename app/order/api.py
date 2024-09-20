@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_async_session
@@ -16,7 +18,7 @@ async def create_order_endpoint(
     return await create_order(db, order)
 
 
-@router.get("/", response_model=list[OrderResponse])
+@router.get("/", response_model=List[OrderResponse])
 async def get_orders_endpoint(
         db: AsyncSession = Depends(get_async_session)
 ):
