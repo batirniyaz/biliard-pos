@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field
 from typing import Optional
 import datetime
 
+from app.table.schema import TableResponse
+
 
 class OrderCreate(BaseModel):
     table_id: int = Field(..., description="The table ID of the order")
@@ -17,6 +19,8 @@ class OrderUpdate(BaseModel):
 class OrderResponse(BaseModel):
     id: int = Field(..., description="The ID of the order")
     table_id: int = Field(..., description="The table ID of the order")
+    table_name: Optional[str] = Field(None, description="The name of the table")
+    table_status: Optional[bool] = Field(None, description="The status of the table")
     start_time: Optional[str] = Field(None, description="The start time of the order")
     products: list = Field([], description="The products of the order")
     options: list = Field([], description="The options of the product")
