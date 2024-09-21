@@ -43,8 +43,15 @@ async def create_order(db: AsyncSession, order: OrderCreate):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+async def get_all_orders(db: AsyncSession):
+    result = await db.execute(select(Order))
+    orders = result.scalars().all()
+
+    return orders if orders else []
+
+
 async def get_orders(db: AsyncSession):
-    result = await db.execute(select(Order).where(Order.status == True))
+    result = await db.execute(select(Order).filter_by(status=True))
     orders = result.scalars().all()
 
     return orders if orders else []
