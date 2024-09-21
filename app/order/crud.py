@@ -115,3 +115,16 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+async def delete_order(db: AsyncSession, order_id: int):
+    try:
+        db_order = await get_order(db, order_id)
+
+        await db.delete(db_order)
+        await db.commit()
+
+        return {"message": "Order deleted successfully"}
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
