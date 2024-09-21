@@ -28,7 +28,13 @@ async def get_table(db: AsyncSession, table_id: int):
 
 
 async def get_all_tables(db: AsyncSession):
-    res = await db.execute(select(Table).where(Table.status == True))
+    res = await db.execute(select(Table))
+    tables = res.scalars().all()
+    return tables
+
+
+async def get_tables(db: AsyncSession):
+    res = await db.execute(select(Table).filter_by(status=True))
     tables = res.scalars().all()
     return tables
 
