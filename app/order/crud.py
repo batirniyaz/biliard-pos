@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import datetime
 
 from fastapi import HTTPException, status
@@ -6,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm.attributes import flag_modified
 
+from app.bot.main import send_telegram_message
 from app.menu.option.crud import get_option
 from app.menu.product.model import Product
 from app.order.model import Order
@@ -36,6 +38,9 @@ async def create_order(db: AsyncSession, order: OrderCreate):
         await db.commit()
         await db.refresh(db_order)
         await db.refresh(table)
+
+        await send_telegram_message(
+            f"Order created on {db_order.table_name} with order id: {db_order.id} \nOn time: {db_order.start_time}")
 
         return db_order
     except Exception as e:
@@ -69,6 +74,9 @@ async def get_order(db: AsyncSession, order_id: int):
 
 async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
     try:
+        # if not order.status:
+        #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order is already ended")
+
         db_order = await get_order(db, order_id)
         table = await get_table(db, db_order.table_id)
 
@@ -103,9 +111,29 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
             db_order.duration = int((end_time_obj - start_time_obj).total_seconds() / 60)  # in minutes
             price_per_minutes = int(table.price / 60)  # price per minute
             total_duration = db_order.duration * price_per_minutes
-            total_price += total_duration
+            round_table_price = ((total_duration + 499) // 500) * 500
+            total_price += round_table_price
 
             table.status = True
+            db_order.table_status = table.status
+
+            product_counts = Counter([product['product_name'] for product in db_order.products])
+            option_counts = Counter([option['option_name'] for option in db_order.options])
+
+            formatted_products = [f"{product} x{count}" for product, count in product_counts.items()]
+            formatted_options = [f"{option} x{count}" for option, count in option_counts.items()]
+
+            await send_telegram_message(
+                f"Order ended on {db_order.table_name} with order id: {db_order.id}"
+                f"\n\nTotal price: {total_price} UZS"
+                f"\nStart time: {db_order.start_time} \t End time: {db_order.end_time}"
+                f"\nDuration: {db_order.duration} minutes"
+                f"\nTable price: {round_table_price} UZS"
+                f"\nProducts price: {db_order.total} UZS"
+                f"\n\nProducts: {', '.join(formatted_products + formatted_options)}"
+            )
+
+        db_order.status = order.status
 
         db_order.total = total_price
 
