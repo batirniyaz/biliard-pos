@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_async_session
 
 from app.order.schema import OrderCreate, OrderResponse, OrderUpdate
-from app.order.crud import create_order, update_order, get_order, get_orders, delete_order
+from app.order.crud import create_order, update_order, get_order, get_orders, delete_order, get_all_orders
 
 router = APIRouter()
 
@@ -16,6 +16,13 @@ async def create_order_endpoint(
         db: AsyncSession = Depends(get_async_session)
 ):
     return await create_order(db, order)
+
+
+@router.get("/all", response_model=List[OrderResponse])
+async def get_all_orders_endpoint(
+        db: AsyncSession = Depends(get_async_session)
+):
+    return await get_all_orders(db)
 
 
 @router.get("/", response_model=List[OrderResponse])
