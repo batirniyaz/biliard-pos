@@ -105,6 +105,7 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
         flag_modified(db_order, "options")
         flag_modified(db_order, "products")
         flag_modified(db_order, "total")
+        flag_modified(table, "status")
 
         await db.commit()
         await db.refresh(db_order)
