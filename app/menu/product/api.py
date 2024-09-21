@@ -15,7 +15,7 @@ router = APIRouter()
 @router.post("/", response_model=ProductResponse)
 async def create_product_endpoint(
         name: str = Form(...),
-        price: float = Form(...),
+        price: Optional[float] = Form(None),
         description: str = Form(...),
         status: bool = Form(...),
         sort_order: int = Form(...),
