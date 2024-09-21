@@ -44,7 +44,7 @@ async def create_order(db: AsyncSession, order: OrderCreate):
 
 
 async def get_orders(db: AsyncSession):
-    result = await db.execute(select(Order))
+    result = await db.execute(select(Order).where(Order.status == True))
     orders = result.scalars().all()
 
     return orders if orders else []
