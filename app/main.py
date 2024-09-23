@@ -1,7 +1,6 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi_cache import FastAPICache
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -9,14 +8,18 @@ from app.auth.auth_backend import router as auth_router
 from app import router
 
 from app.auth.database import create_db_and_tables
-from app.utils.cache import InMemoryCacheBackend
+
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from redis import asyncio as aioredis
 
 
 @asynccontextmanager
 async def lifespan(main_app: FastAPI):
     await create_db_and_tables()
 
-    FastAPICache.init(InMemoryCacheBackend(), prefix="billiard-cache")
+    redis = aioredis.from_url("redis://localhost")
+    FastAPICache.init(RedisBackend(redis), prefix="biliard-cache")
 
     yield
 
