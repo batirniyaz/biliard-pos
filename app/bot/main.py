@@ -1,9 +1,9 @@
 from telegram import Bot
 
-from app.config import TG_TOKEN
+from app.config import TG_TOKEN, TG_CHAT_ID
 
 TELEGRAM_BOT_TOKEN = TG_TOKEN
-CHAT_ID = '685366044'
+CHAT_ID = TG_CHAT_ID
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
