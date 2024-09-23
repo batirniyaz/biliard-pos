@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:15
+    container_name: db_app
+    environment:
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    command: -p 1221
+    expose:
+      - 1221
+    env_file:
+      - .env-non-dev
+
+  redis:
+    image: redis:7
+    container_name: redis_app
+    command: --port 6379
+    expose:
+      - 6379
+
+  app:
+    build: .
+    env_file:
+      - .env-non-dev
+    container_name: biliard-pos
+    ports:
+      - "3333:8000"
+    depends_on:
+        - db
+        - redis
+    environment:
+        - DATABASE_URL=postgresql://${POSTGRES_USER}:postgres@db:1221/${POSTGRES_DB}
+        - REDIS_URL=redis://redis:6379
+    volumes:
+      - .:/biliard-pos
+    command: bash -c "alembic upgrade head &&
+                        gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
+
+volumes:
+    pgdata:
