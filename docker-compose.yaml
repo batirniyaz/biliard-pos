@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:15
+    restart: always
     container_name: db_app
     environment:
         POSTGRES_USER: ${POSTGRES_USER}
@@ -16,6 +17,7 @@ services:
 
   redis:
     image: redis:7
+    restart: always
     container_name: redis_app
     command: --port 6379
     expose:
@@ -23,6 +25,7 @@ services:
 
   app:
     build: .
+    restart: always
     env_file:
       - .env-non-dev
     container_name: biliard-pos
