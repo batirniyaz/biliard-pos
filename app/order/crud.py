@@ -32,7 +32,8 @@ async def create_order(db: AsyncSession, order: OrderCreate):
             start_time=start_time,
             date=date,
             table_name=table.name,
-            table_status=table.status
+            table_status=table.status,
+            table_price=table.price,
         )
         db.add(db_order)
         await db.commit()
