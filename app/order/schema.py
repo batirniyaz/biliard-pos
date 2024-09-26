@@ -20,6 +20,7 @@ class OrderResponse(BaseModel):
     id: int = Field(..., description="The ID of the order")
     table_id: int = Field(..., description="The table ID of the order")
     table_name: Optional[str] = Field(None, description="The name of the table")
+    table_price: Optional[float] = Field(None, description="The price of the table")
     table_status: Optional[bool] = Field(None, description="The status of the table")
     start_time: Optional[str] = Field(None, description="The start time of the order")
     products: list = Field([], description="The products of the order")
@@ -41,13 +42,16 @@ class OrderResponse(BaseModel):
             "example": {
                 "id": 1,
                 "table_id": 1,
+                "table_name": "Table 1",
+                "table_price": 100.0,
+                "table_status": False,
                 "start_time": "12:00:00",
                 "products": [{"id": 1, "name": "Kebab", "price": 100.0}],
                 "options": [{"id": 1, "name": "6 person"}],
-                "end_time": "14:00:00",
-                "duration": 120,
-                "total": 100.0,
-                "date": "2024-09-20",
+                "end_time": "13:00:00",
+                "duration": 60,
+                "total": 200.0,
+                "date": "2022-01-01",
                 "status": True,
                 "created_at": "2022-01-01T12:00:00",
                 "updated_at": "2022-01-01T12:00:00"
