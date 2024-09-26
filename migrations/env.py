@@ -12,6 +12,7 @@ from app.table.model import Table
 from app.order.model import Order
 from app.menu.option.model import Option
 from app.menu.product.model import Product
+from app.daily_report.model import DailyReport, TableReport
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
