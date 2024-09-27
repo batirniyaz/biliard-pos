@@ -74,12 +74,13 @@ async def calculate_daily_report(db, date):
     total_play_time = 0
     form_prod = []
     for order in orders:
+        if order.duration is not None:
+            total_play_time += order.duration
         total_income += order.total
         for product in order.products:
             product_income += product["price"]
         for option in order.options:
             product_income += option["price"]
-        total_play_time += order.duration
 
         product_counts = Counter([product['product_id'] for product in order.products])
         option_counts = Counter([option['option_id'] for option in order.options])

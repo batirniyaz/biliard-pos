@@ -15,26 +15,22 @@ router = APIRouter()
 @router.get("/daily")
 async def get_daily_report_endpoint(
         date: str = Query(
-            None,
+            ...,
             description="The date of the daily report",
             alias="daily_report_date"),
         db: AsyncSession = Depends(get_async_session)
 ):
-    if date is None:
-        _, date = await get_time()
     return await get_daily_report(db, date)
 
 
 @router.get("/table")
 async def get_table_report_endpoint(
         date: str = Query(
-            None,
+            ...,
             description="The date of the daily report",
             alias="daily_report_date"),
         table_id: int = Query(..., description="The id of the table", alias="table_id"),
         db: AsyncSession = Depends(get_async_session)
 
 ):
-    if date is None:
-        _, date = await get_time()
     return await calculate_table_report(db, date, table_id)
