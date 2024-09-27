@@ -70,6 +70,9 @@ async def delete_table(db: AsyncSession, table_id: int):
     orders = orders_query.scalars().all()
 
     if all(order.status is False for order in orders):
+        for order in orders:
+            await db.delete(order)
+            await db.commit()
 
         await db.delete(db_table)
         await db.commit()
