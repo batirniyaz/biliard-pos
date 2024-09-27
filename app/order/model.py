@@ -12,7 +12,7 @@ class Order(Base):
     __tablename__ = "order"
 
     id: Mapped[int] = mapped_column(Integer, unique=True, index=True, nullable=False, primary_key=True)
-    table_id: Mapped[int] = mapped_column(Integer, ForeignKey("table.id"), nullable=False)
+    table_id: Mapped[int] = mapped_column(Integer, ForeignKey("table.id", ondelete="CASCADE"), nullable=True)
     table_name: Mapped[str] = mapped_column(String(length=255), nullable=True)
     table_price: Mapped[float] = mapped_column(Float, nullable=True)
     table_status: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
