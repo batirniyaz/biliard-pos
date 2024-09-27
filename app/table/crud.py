@@ -1,6 +1,9 @@
+from fastapi import HTTPException
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from app.order.model import Order
 from app.table.model import Table
 from app.table.schema import TableCreate, TableUpdate
 
@@ -63,6 +66,15 @@ async def delete_table(db: AsyncSession, table_id: int):
     if not db_table:
         raise Exception("Table not found")
 
-    await db.delete(db_table)
-    await db.commit()
-    return db_table
+    orders_query = await db.execute(select(Order).filter_by(table_id=table_id))
+    orders = orders_query.scalars().all()
+
+    if all(order.status is False for order in orders):
+
+        await db.delete(db_table)
+        await db.commit()
+
+        return db_table
+    else:
+        raise HTTPException(status_code=400, detail="Firstly close all orders related with this table")
+
