@@ -67,28 +67,38 @@ async def create_daily_report():
 
 async def calculate_daily_report(db, date):
     print("I am in calculate_daily_report 4")
-    order_query = await db.execute(select(Order).filter_by(date=date).order_by(Order.id.desc()))
+    if len(date) == 10:
+        order_query = await db.execute(select(Order).filter_by(date=date).order_by(Order.id.desc()))
+    else:
+        order_query = await db.execute(select(Order).filter(Order.date.startswith(date)).order_by(Order.id.desc()))
+
     orders = order_query.scalars().all()
 
     total_income = 0
     product_income = 0
     total_play_time = 0
     form_prod = []
+    product_ids = []
+    option_ids = []
     for order in orders:
         if order.duration is not None:
             total_play_time += order.duration
         total_income += order.total
         for product in order.products:
             product_income += product["price"]
+            product_ids.append(product["product_id"])
         for option in order.options:
             product_income += option["price"]
+            option_ids.append(option["option_id"])
 
-        product_counts = Counter([product['product_id'] for product in order.products])
-        option_counts = Counter([option['option_id'] for option in order.options])
+    print(f"{product_ids=}")
 
-        formatted_products = [{"product_id": f"{product}", "quantity": f"{count}"} for product, count in product_counts.items()]
-        formatted_options = [{"option_id": f"{option}", "quantity": f"{count}"} for option, count in option_counts.items()]
-        form_prod = formatted_products + formatted_options
+    product_counts = Counter([product for product in product_ids])
+    option_counts = Counter([option for option in option_ids])
+
+    formatted_products = [{"product_id": f"{product}", "quantity": f"{count}"} for product, count in product_counts.items()]
+    formatted_options = [{"option_id": f"{option}", "quantity": f"{count}"} for option, count in option_counts.items()]
+    form_prod.append(formatted_products + formatted_options)
 
     table_income = total_income - product_income
     daily_report = {
@@ -105,8 +115,12 @@ async def calculate_daily_report(db, date):
 
 async def calculate_table_report(db, date, table_id: Optional[int] = None):
     print("I am in calculate_table_report 6")
-    order_query = await db.execute(
-        select(Order).filter_by(date=date).filter_by(table_id=table_id).order_by(Order.id.desc()))
+    if len(date) == 10:
+        order_query = await db.execute(
+            select(Order).filter_by(date=date).filter_by(table_id=table_id).order_by(Order.id.desc()))
+    else:
+        order_query = await db.execute(
+            select(Order).filter(Order.date.startswith(date)).filter_by(table_id=table_id).order_by(Order.id.desc()))
     orders = order_query.scalars().all()
 
     table_report = []
