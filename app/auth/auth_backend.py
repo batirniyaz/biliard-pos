@@ -131,7 +131,7 @@ async def delete_user(
 
 @router_def.get("/authenticated-route")
 async def authenticated_route(user: User = Depends(current_active_user)):
-    return {"message": f"Hello {user.email}!"}
+    return {"message": f"Hello {user.email}!", "is_superuser": user.is_superuser}
 
 
 router.include_router(router_def, prefix="/auth", tags=["auth"])
