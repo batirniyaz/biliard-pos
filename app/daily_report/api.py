@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,8 +29,8 @@ async def get_table_report_endpoint(
             ...,
             description="The date of the daily report",
             alias="daily_report_date"),
-        table_id: int = Query(..., description="The id of the table", alias="table_id"),
+        table_id: Optional[int] = Query(None, description="The id of the table", alias="table_id"),
         db: AsyncSession = Depends(get_async_session)
 
 ):
-    return await calculate_table_report(db, date, table_id)
+    return await calculate_table_report(db, date, table_id if table_id else None)

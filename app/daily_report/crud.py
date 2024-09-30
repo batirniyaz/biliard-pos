@@ -1,5 +1,6 @@
 from collections import Counter
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -102,7 +103,7 @@ async def calculate_daily_report(db, date):
     return daily_report
 
 
-async def calculate_table_report(db, date, table_id):
+async def calculate_table_report(db, date, table_id: Optional[int] = None):
     print("I am in calculate_table_report 6")
     order_query = await db.execute(
         select(Order).filter_by(date=date).filter_by(table_id=table_id).order_by(Order.id.desc()))
