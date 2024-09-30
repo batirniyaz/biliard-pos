@@ -6,7 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.menu.option.crud import get_option
+from app.menu.option.model import Option
 from app.menu.product.crud import get_product
+from app.menu.product.model import Product
 from app.utils.time_utils import get_time
 from app.auth.database import get_async_session
 
@@ -63,6 +65,28 @@ async def create_daily_report():
 
     except Exception as e:
         raise e
+
+
+async def create_table_report():
+    try:
+        _, current_date = get_time()
+
+        async for session in get_async_session():
+            async with session.begin():
+                table_report = await calculate_table_report(session, current_date)
+
+                db_table_report = TableReport(
+                    date=current_date,
+                    table_report=table_report
+                )
+                session.add(db_table_report)
+                await session.commit()
+                await session.refresh(db_table_report)
+                return db_table_report
+
+    except Exception as e:
+        raise e
+
 
 
 async def calculate_daily_report(db, date):
@@ -138,7 +162,10 @@ async def calculate_table_report(db, date, table_id: Optional[int] = None):
         form_prod = formatted_products + formatted_options
 
         for product in order.products:
-            db_product = await get_product(db, product["product_id"])
+            db_product = await db.execute(select(Product).filter_by(id=product["product_id"]))
+            db_product = db_product.scalars().first()
+            if not db_product:
+                continue
             products.append({
                 "product_id": db_product.id,
                 "product_name": db_product.name,
@@ -148,7 +175,10 @@ async def calculate_table_report(db, date, table_id: Optional[int] = None):
             product_price += db_product.price
 
         for option in order.options:
-            db_option = await get_option(db, option["option_id"])
+            db_option = await db.execute(select(Option).filter_by(id=option["option_id"]))
+            db_option = db_option.scalars().first()
+            if not db_option:
+                continue
             products.append({
                 "option_id": db_option.id,
                 "option_name": db_option.name,
