@@ -139,13 +139,21 @@ async def calculate_daily_report(db, date):
 
 async def calculate_table_report(db, date, table_id: Optional[int] = None):
     print("I am in calculate_table_report 6")
-    if len(date) == 10:
-        order_query = await db.execute(
-            select(Order).filter_by(date=date).filter_by(table_id=table_id).order_by(Order.id.desc()))
+    query = select(Order)
+    if table_id:
+        if len(date) == 10:
+            query = query.filter_by(date=date).filter_by(table_id=table_id)
+        else:
+            query = query.filter(Order.date.startswith(date)).filter_by(table_id=table_id)
     else:
-        order_query = await db.execute(
-            select(Order).filter(Order.date.startswith(date)).filter_by(table_id=table_id).order_by(Order.id.desc()))
-    orders = order_query.scalars().all()
+        if len(date) == 10:
+            query = query.filter_by(date=date)
+        else:
+            query = query.filter(Order.date.startswith(date))
+
+    order_query = query.order_by(Order.id.desc())
+    result = await db.execute(order_query)
+    orders = result.scalars().all()
 
     table_report = []
     form_prod = []
