@@ -164,3 +164,44 @@ async def delete_order(db: AsyncSession, order_id: int):
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+async def cancel_order(db: AsyncSession, order_id: int, order: OrderUpdate):
+    try:
+        db_order = await get_order(db, order_id)
+        db_table = await get_table(db, db_order.table_id)
+
+        if db_table.status:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Table is not occupied")
+
+        if not db_order.status:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order already ended")
+
+        for product_id in order.products:
+            for product in db_order.products:
+                if product["product_id"] == product_id:
+                    db_product = await get_product(db, product_id)
+                    db_order.products.remove(product)
+                    db_order.total -= db_product.price
+                    break
+
+        for option_id in order.options:
+            for option in db_order.options:
+                if option["option_id"] == option_id:
+                    db_option = await get_option(db, option_id)
+                    db_order.options.remove(option)
+                    db_order.total -= db_option.price
+                    break
+
+        flag_modified(db_order, "products")
+        flag_modified(db_order, "options")
+        flag_modified(db_order, "total")
+
+        await db.commit()
+        await db.refresh(db_order)
+
+        return db_order
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
