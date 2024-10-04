@@ -11,7 +11,7 @@ from app.bot.main import send_telegram_message
 from app.menu.option.crud import get_option
 from app.menu.product.model import Product
 from app.order.model import Order
-from app.order.schema import OrderCreate, OrderUpdate
+from app.order.schema import OrderCreate, OrderUpdate, OrderCancel
 from app.table.crud import get_table, update_table
 from app.utils.time_utils import get_time
 
@@ -26,7 +26,7 @@ async def create_order(db: AsyncSession, order: OrderCreate):
 
         table.status = False
 
-        start_time, date = await get_time()
+        start_time, date, _ = await get_time()
         db_order = Order(
             **order.model_dump(),
             start_time=start_time,
@@ -106,10 +106,11 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
 
         if not order.status:
 
-            db_order.end_time, _ = await get_time()
+            db_order.end_time, _, uzb_time = await get_time()
             start_time_obj = datetime.strptime(db_order.start_time, "%H:%M:%S")
-            end_time_obj = datetime.strptime(db_order.end_time, "%H:%M:%S")
-            db_order.duration = int((end_time_obj - start_time_obj).total_seconds() / 60)  # in minutes
+            start_datetime_obj = datetime.strptime(f"{db_order.date} {db_order.start_time}", "%Y-%m-%d %H:%M:%S")
+            end_datetime_obj = uzb_time
+            db_order.duration = int((end_datetime_obj - start_datetime_obj).total_seconds() / 60)  # in minutes
             price_per_minutes = int(table.price / 60)  # price per minute
             total_duration = db_order.duration * price_per_minutes
             round_table_price = ((total_duration + 499) // 500) * 500
@@ -124,10 +125,17 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
             formatted_products = [f"{product} x{count}" for product, count in product_counts.items()]
             formatted_options = [f"{option} x{count}" for option, count in option_counts.items()]
 
+            changed_status = False
+            end_date = uzb_time.strftime("%Y-%m-%d")
+            if end_date != db_order.date:
+                changed_status = True
+
+
             await send_telegram_message(
                 f"Order ended on {db_order.table_name} with order id: {db_order.id}"
                 f"\n\nTotal price: {total_price} UZS"
-                f"\nStart time: {db_order.start_time} \t End time: {db_order.end_time}"
+                f"\nStart time: {db_order.start_time if not changed_status else db_order.date, db_order.start_time} "
+                f"\t End time: {db_order.end_time}"
                 f"\nDuration: {db_order.duration} minutes"
                 f"\nTable price: {round_table_price} UZS"
                 f"\nProducts price: {db_order.total} UZS"
