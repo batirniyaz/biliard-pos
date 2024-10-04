@@ -11,7 +11,7 @@ from app.bot.main import send_telegram_message
 from app.menu.option.crud import get_option
 from app.menu.product.model import Product
 from app.order.model import Order
-from app.order.schema import OrderCreate, OrderUpdate, OrderCancel
+from app.order.schema import OrderCreate, OrderUpdate
 from app.table.crud import get_table, update_table
 from app.utils.time_utils import get_time
 
