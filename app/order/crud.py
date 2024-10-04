@@ -130,7 +130,6 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
             if end_date != db_order.date:
                 changed_status = True
 
-
             await send_telegram_message(
                 f"Order ended on {db_order.table_name} with order id: {db_order.id}"
                 f"\n\nTotal price: {total_price} UZS"
