@@ -16,6 +16,7 @@ class DailyReport(Base):
     product_income: Mapped[int] = mapped_column(Integer, nullable=False)
     products: Mapped[List] = mapped_column(JSON, default=[])
     total_play_time: Mapped[int] = mapped_column(Integer, nullable=False)
+    orders: Mapped[List] = mapped_column(JSON, default=[], nullable=True)
 
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True),
                                                           default=lambda: datetime.datetime.now(datetime.timezone.utc))
@@ -33,6 +34,7 @@ class TableReport(Base):
     products: Mapped[List] = mapped_column(JSON, default=[])
     total_income: Mapped[int] = mapped_column(Integer, nullable=False)
     total_play_time: Mapped[int] = mapped_column(Integer, nullable=False)
+    orders: Mapped[List] = mapped_column(JSON, default=[])
 
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True),
                                                           default=lambda: datetime.datetime.now(datetime.timezone.utc))
