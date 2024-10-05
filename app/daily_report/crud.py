@@ -260,7 +260,15 @@ async def calculate_table_report(db, date, table_id: Optional[int] = None):
     return table_report
 
 
-# def schedule_daily_report():
-#     _, current_date = get_time()
-#     schedule_time = datetime.now(current_date).replace(hour=23, minute=30, second=0, microsecond=0)
-#     schedule.every().day.at(schedule_time.strftime("%H:%M")).do(lambda: asyncio.create_task(store_daily_report()))
+def schedule_daily_report():
+    print("I am in schedule_daily_report 7")
+    uzb_time = get_time_sync()
+    previous_date = datetime.fromtimestamp(time.mktime(uzb_time)) - timedelta(days=1)
+    schedule_time = datetime.now().replace(hour=15, minute=16, second=0, microsecond=0)
+    (schedule.every().day.at(schedule_time.strftime("%H:%M"))
+     .do(lambda: asyncio.create_task(create_daily_report(previous_date.strftime("%Y-%m-%d")))))
+    (schedule.every().day.at(schedule_time.strftime("%H:%M"))
+     .do(lambda: asyncio.create_task(create_table_report(previous_date.strftime("%Y-%m-%d")))))
+
+
+
