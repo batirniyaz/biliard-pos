@@ -10,7 +10,7 @@ class DailyReport(Base):
     __tablename__ = "daily_report"
 
     id: Mapped[int] = mapped_column(Integer, unique=True, index=True, nullable=False, primary_key=True)
-    date: Mapped[str] = mapped_column(String(length=10), nullable=False)
+    date: Mapped[str] = mapped_column(String(length=20), nullable=False)
     total_income: Mapped[int] = mapped_column(Integer, nullable=False)
     table_income: Mapped[int] = mapped_column(Integer, nullable=False)
     product_income: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -29,7 +29,7 @@ class TableReport(Base):
     __tablename__ = "table_report"
 
     id: Mapped[int] = mapped_column(Integer, unique=True, index=True, nullable=False, primary_key=True)
-    date: Mapped[str] = mapped_column(String(length=10), nullable=True)
+    date: Mapped[str] = mapped_column(String(length=20), nullable=True)
     table_id: Mapped[int] = mapped_column(Integer, nullable=False)
     products: Mapped[List] = mapped_column(JSON, default=[])
     total_income: Mapped[int] = mapped_column(Integer, nullable=False)
