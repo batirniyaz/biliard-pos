@@ -24,6 +24,7 @@ class Order(Base):
     duration: Mapped[float] = mapped_column(Float, nullable=True)
     total: Mapped[float] = mapped_column(Float, nullable=True, default=0)
     date: Mapped[str] = mapped_column(String(length=255), nullable=True)
+    report_status: Mapped[bool] = mapped_column(Boolean, nullable=True, default=True)
 
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True),
                                                           default=lambda: datetime.datetime.now(datetime.timezone.utc))
