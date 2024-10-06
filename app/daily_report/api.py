@@ -1,13 +1,10 @@
-from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.database import get_async_session
-from app.daily_report.schema import DailyReportResponse
-from app.daily_report.crud import get_daily_report, calculate_table_report
-from app.utils.time_utils import get_time
+from app.daily_report.crud import get_daily_report, get_table_report, close_session
 
 router = APIRouter()
 
@@ -33,4 +30,11 @@ async def get_table_report_endpoint(
         db: AsyncSession = Depends(get_async_session)
 
 ):
-    return await calculate_table_report(db, date, table_id if table_id else None)
+    return await get_table_report(db, date, table_id if table_id else None)
+
+
+@router.get("/close_session")
+async def close_session_endpoint(
+        db: AsyncSession = Depends(get_async_session)
+):
+    return await close_session(db)
