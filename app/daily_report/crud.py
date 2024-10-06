@@ -6,6 +6,7 @@ from typing import Optional
 import schedule
 import asyncio
 
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -50,101 +51,104 @@ async def define_date_type(db: AsyncSession, date: str, ReportModel, table_id: O
 async def get_daily_report(db: AsyncSession, date: str):
     print("I am in get_daily_report 1")
     daily_report = await define_date_type(db, date, DailyReport)
-    if daily_report:
-        print("made this operation")
-        return daily_report
-    else:
-        print("made another operation")
-        return await calculate_daily_report(db, date)
+    return daily_report if daily_report else []
 
 
 async def get_table_report(db: AsyncSession, date: str, table_id: Optional[int] = None):
     print("I am in get_table_report 2")
     table_report = await define_date_type(db, date, TableReport, table_id if table_id else None)
-    if table_report:
-        return table_report
-    else:
-        return await calculate_table_report(db, date, table_id if table_id else None)
+    return table_report if table_report else []
 
 
-async def create_daily_report(previous_date):
-    previous_date = "2024-10-04"
-    try:
-        async for session in get_async_session():
-            async with session.begin():
-                daily_report = await get_daily_report(session, previous_date)
-
-                if isinstance(daily_report, DailyReport):
-                    db_daily_report = daily_report
-                else:
-
-                    db_daily_report = DailyReport(
-                        date=previous_date,
-                        total_income=daily_report["total_income"],
-                        table_income=daily_report["table_income"],
-                        product_income=daily_report["product_income"],
-                        total_play_time=daily_report["total_play_time"],
-                        products=daily_report["products"]
-                    )
-                    session.add(db_daily_report)
-                    await session.flush()
-                    await session.refresh(db_daily_report)
-                    await session.commit()
-                return db_daily_report
-
-    except Exception as e:
-        raise e
+def serialize_order(order):
+    return {
+        "id": order.id,
+        "date": order.date,
+        "total": order.total,
+        "duration": order.duration,
+        "products": order.products,
+        "options": order.options,
+        "table_id": order.table_id,
+        "table_name": order.table_name,
+        "table_price": order.table_price,
+        "table_status": order.table_status,
+        "start_time": order.start_time,
+        "end_time": order.end_time,
+        "status": order.status,
+    }
 
 
-async def create_table_report(previous_date):
-    try:
-
-        async for session in get_async_session():
-            async with session.begin():
-                db_tables = await get_tables(session)
-                for table in db_tables:
-                    table_report = await calculate_table_report(session, previous_date, table.id)
-
-                    products = []
-                    total_play_time = 0
-                    total_income = 0
-                    for order in table_report:
-                        for product in order["products"]:
-                            for prod in products:
-                                if prod["product_id"] == product["product_id"]:
-                                    prod["quantity"] += product["quantity"]
-                                else:
-                                    products.append(product)
-                        total_play_time += order["total_play_time"]
-                        total_income += order["total_income"]
-
-                    db_table_report = TableReport(
-                        date=previous_date,
-                        table_id=table.id,
-                        products=products,
-                        total_income=total_income,
-                        total_play_time=total_play_time
-
-                    )
-                    session.add(db_table_report)
-                    await session.flush()
-                    await session.refresh(db_table_report)
-
-                await session.commit()
-                return db_table_report
-
-    except Exception as e:
-        raise e
-
-
-async def calculate_daily_report(db, date):
+async def calculate_daily_report(db):
     print("I am in calculate_daily_report 4")
-    if len(date) == 10:
-        order_query = await db.execute(select(Order).filter_by(date=date).order_by(Order.id.desc()))
-    else:
-        order_query = await db.execute(select(Order).filter(Order.date.startswith(date)).order_by(Order.id.desc()))
+    result = await db.execute(select(Order).filter_by(report_status=True).order_by(Order.id.desc()))
+    orders = result.scalars().all()
 
-    orders = order_query.scalars().all()
+    res_daily = await calculation(db, orders, DailyReport)
+
+    serialized_orders = [serialize_order(order) for order in orders]
+
+    db_daily_report = DailyReport(
+        date=res_daily["date"],
+        total_income=res_daily["total_income"],
+        table_income=res_daily["table_income"],
+        product_income=res_daily["product_income"],
+        total_play_time=res_daily["total_play_time"],
+        products=res_daily["products"],
+        orders=serialized_orders,
+    )
+    db.add(db_daily_report)
+    await db.commit()
+    await db.refresh(db_daily_report)
+
+    print("ending calculation 5")
+    return db_daily_report
+
+
+async def calculate_table_report(db):
+    print("I am in calculate_table_report 6")
+    db_tables = await get_tables(db)
+
+    db_tables_report = []
+
+    for table in db_tables:
+        query = select(Order).filter_by(table_id=table.id).filter_by(report_status=True).order_by(Order.id.desc())
+
+        result = await db.execute(query)
+        orders = result.scalars().all()
+
+        res_table = await calculation(db, orders, TableReport)
+
+        for order in orders:
+            order.report_status = False
+            db.add(order)
+            await db.commit()
+            await db.refresh(order)
+
+        serialized_orders = [serialize_order(order) for order in orders]
+
+        db_table_report = TableReport(
+            date=res_table["date"],
+            table_id=table.id,
+            products=res_table["products"],
+            total_income=res_table["total_income"],
+            total_play_time=res_table["total_play_time"],
+            orders=serialized_orders
+        )
+        db_tables_report.append(db_table_report)
+
+        db.add(db_table_report)
+        await db.commit()
+        await db.refresh(db_table_report)
+
+    return db_tables_report
+
+
+async def calculation(db, orders, report):
+    uzb_time = get_time_sync()
+    print(f"{uzb_time=}")
+    date = uzb_time.strftime("%Y-%m-%d")
+    time_uzb = uzb_time.strftime("%H:%M:%S")
+    datetime_uzb = f"{date} {time_uzb}"
 
     total_income = 0
     product_income = 0
@@ -174,101 +178,28 @@ async def calculate_daily_report(db, date):
     form_prod.append(formatted_products + formatted_options)
 
     table_income = total_income - product_income
-    daily_report = {
-        "date": date,
+
+    db_report = {
+        "date": datetime_uzb,
         "total_income": total_income,
         "table_income": table_income,
-        "products": form_prod,
         "product_income": product_income,
         "total_play_time": total_play_time,
+        "products": form_prod,
+        "orders": orders
     }
-    print("ending calculation 5")
-    return daily_report
+    return db_report
 
 
-async def calculate_table_report(db, date, table_id: Optional[int] = None):
-    print("I am in calculate_table_report 6")
-    query = select(Order)
-    if table_id:
-        if len(date) == 10:
-            query = query.filter_by(date=date).filter_by(table_id=table_id)
-        else:
-            query = query.filter(Order.date.startswith(date)).filter_by(table_id=table_id)
-    else:
-        if len(date) == 10:
-            query = query.filter_by(date=date)
-        else:
-            query = query.filter(Order.date.startswith(date))
+async def close_session(db: AsyncSession):
 
-    order_query = query.order_by(Order.id.desc())
-    result = await db.execute(order_query)
-    orders = result.scalars().all()
+    daily_report = await calculate_daily_report(db)
 
-    table_report = []
-    form_prod = []
-    for order in orders:
-        products = []
-        product_price = 0
-        product_count = Counter([product['product_id'] for product in order.products])
-        option_count = Counter([option['option_id'] for option in order.options])
+    table_report = await calculate_table_report(db)
 
-        formatted_products = [{"product_id": f"{product}", "quantity": f"{count}"} for product, count in
-                              product_count.items()]
-        formatted_options = [{"option_id": f"{option}", "quantity": f"{count}"} for option, count in
-                             option_count.items()]
-        form_prod = formatted_products + formatted_options
-
-        for product in order.products:
-            db_product = await db.execute(select(Product).filter_by(id=product["product_id"]))
-            db_product = db_product.scalars().first()
-            if not db_product:
-                continue
-            products.append({
-                "product_id": db_product.id,
-                "product_name": db_product.name,
-                "price": db_product.price,
-                "quantity": product_count[product["product_id"]]
-            })
-            product_price += db_product.price
-
-        for option in order.options:
-            db_option = await db.execute(select(Option).filter_by(id=option["option_id"]))
-            db_option = db_option.scalars().first()
-            if not db_option:
-                continue
-            products.append({
-                "option_id": db_option.id,
-                "option_name": db_option.name,
-                "price": db_option.price,
-                "quantity": option_count[option["option_id"]]
-            })
-            product_price += db_option.price
-
-        table_report.append({
-            "order_id": order.id,
-            "table_name": order.table_name,
-            "table_price": order.table_price,
-            "start_time": order.start_time,
-            "product_income": product_price,
-            "products": form_prod,
-            "end_time": order.end_time,
-            "total_play_time": order.duration,
-            "date": order.date,
-            "total_income": order.total,
-        })
-
-    return table_report
+    return {"daily_report": daily_report, "table_report": table_report}
 
 
-def schedule_daily_report():
-    print("I am in schedule_daily_report 7")
-    uzb_time = get_time_sync()
-    previous_date = datetime.fromtimestamp(time.mktime(uzb_time)) - timedelta(days=1)
-    schedule_time = datetime.now().replace(hour=15, minute=16, second=0, microsecond=0)
-    (schedule.every().day.at(schedule_time.strftime("%H:%M"))
-     .do(lambda: asyncio.create_task(create_daily_report(previous_date.strftime("%Y-%m-%d")))))
-    (schedule.every().day.at(schedule_time.strftime("%H:%M"))
-     .do(lambda: asyncio.create_task(create_table_report(previous_date.strftime("%Y-%m-%d")))))
 
 
 
