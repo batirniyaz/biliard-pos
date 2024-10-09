@@ -32,6 +32,8 @@ class TableReport(Base):
     date: Mapped[str] = mapped_column(String(length=20), nullable=True)
     table_id: Mapped[int] = mapped_column(Integer, nullable=False)
     products: Mapped[List] = mapped_column(JSON, default=[])
+    table_income: Mapped[int] = mapped_column(Integer, nullable=True)
+    products_income: Mapped[int] = mapped_column(Integer, nullable=True)
     total_income: Mapped[int] = mapped_column(Integer, nullable=False)
     total_play_time: Mapped[int] = mapped_column(Integer, nullable=False)
     orders: Mapped[List] = mapped_column(JSON, default=[])
