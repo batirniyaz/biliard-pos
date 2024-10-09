@@ -57,12 +57,20 @@ def handle_device_action(device_id: int, action):
         return {'error': str(e)}
 
 
+# def turn_on(device_id: int):
+#     return handle_device_action(device_id, 'turn_on')
+#
+#
+# def turn_off(device_id: int):
+#     return handle_device_action(device_id, 'turn_off')
+
+
 def turn_on(device_id: int):
-    return handle_device_action(device_id, 'turn_on')
+    return {'status': False, 'response': True}
 
 
 def turn_off(device_id: int):
-    return handle_device_action(device_id, 'turn_off')
+    return {'status': True, 'response': True}
 
 
 def get_status(device_id: int):
