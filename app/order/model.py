@@ -22,6 +22,8 @@ class Order(Base):
     options: Mapped[List] = mapped_column(JSON, default=[])
     end_time: Mapped[str] = mapped_column(String(length=255), nullable=True)
     duration: Mapped[float] = mapped_column(Float, nullable=True)
+    table_income: Mapped[float] = mapped_column(Float, nullable=True, default=0)
+    products_income: Mapped[float] = mapped_column(Float, nullable=True, default=0)
     total: Mapped[float] = mapped_column(Float, nullable=True, default=0)
     date: Mapped[str] = mapped_column(String(length=255), nullable=True)
     report_status: Mapped[bool] = mapped_column(Boolean, nullable=True, default=True)
