@@ -1,25 +1,13 @@
-import time
 from collections import Counter
-from datetime import datetime, timedelta
 from typing import Optional
 
-import schedule
-import asyncio
-
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.menu.option.crud import get_option
-from app.menu.option.model import Option
-from app.menu.product.crud import get_product
-from app.menu.product.model import Product
 from app.table.crud import get_tables
-from app.utils.time_utils import get_time, get_time_sync
-from app.auth.database import get_async_session
+from app.utils.time_utils import get_time_sync
 
 from app.daily_report.model import DailyReport, TableReport
-from app.daily_report.schema import DailyReportCreate, TableReportCreate
 from app.order.model import Order
 
 
@@ -27,22 +15,13 @@ async def define_date_type(db: AsyncSession, date: str, ReportModel, table_id: O
     print("I am in define_date_type 2")
     query = select(ReportModel)
 
-    if len(date) == 10:
-        result = query.filter_by(date=date)
-        if table_id:
-            result = await db.execute(result.filter_by(table_id=table_id))
-            report = result.scalars().all()
-        else:
-            result = await db.execute(result)
-            report = result.scalars().first()
+    result = (query.filter(ReportModel.date.startswith(date)).order_by(ReportModel.date.desc()))
+    if table_id:
+        result = await db.execute(result.filter_by(table_id=table_id))
+        report = result.scalars().all()
     else:
-        result = (query.filter(ReportModel.date.startswith(date)).order_by(ReportModel.date.desc()))
-        if table_id:
-            result = await db.execute(result.filter_by(table_id=table_id))
-            report = result.scalars().all()
-        else:
-            result = await db.execute(result)
-            report = result.scalars().all()
+        result = await db.execute(result)
+        report = result.scalars().all()
 
     print("ending define_date_type 3")
     return report if report else []
@@ -64,6 +43,8 @@ def serialize_order(order):
     return {
         "id": order.id,
         "date": order.date,
+        "table_income": order.table_income,
+        "products_income": order.products_income,
         "total": order.total,
         "duration": order.duration,
         "products": order.products,
@@ -130,6 +111,8 @@ async def calculate_table_report(db):
             date=res_table["date"],
             table_id=table.id,
             products=res_table["products"],
+            table_income=res_table["table_income"],
+            products_income=res_table["product_income"],
             total_income=res_table["total_income"],
             total_play_time=res_table["total_play_time"],
             orders=serialized_orders
@@ -143,7 +126,7 @@ async def calculate_table_report(db):
     return db_tables_report
 
 
-async def calculation(db, orders, report):
+async def calculation(orders):
     uzb_time = get_time_sync()
     print(f"{uzb_time=}")
     date = uzb_time.strftime("%Y-%m-%d")
@@ -185,7 +168,7 @@ async def calculation(db, orders, report):
         "table_income": table_income,
         "product_income": product_income,
         "total_play_time": total_play_time,
-        "products": form_prod,
+        "products": formatted_products + formatted_options,
         "orders": orders
     }
     return db_report
