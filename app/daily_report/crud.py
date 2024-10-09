@@ -64,7 +64,7 @@ async def calculate_daily_report(db):
     result = await db.execute(select(Order).filter_by(report_status=True).order_by(Order.id.desc()))
     orders = result.scalars().all()
 
-    res_daily = await calculation(db, orders, DailyReport)
+    res_daily = await calculation(orders)
 
     serialized_orders = [serialize_order(order) for order in orders]
 
@@ -97,7 +97,7 @@ async def calculate_table_report(db):
         result = await db.execute(query)
         orders = result.scalars().all()
 
-        res_table = await calculation(db, orders, TableReport)
+        res_table = await calculation(orders)
 
         for order in orders:
             order.report_status = False
