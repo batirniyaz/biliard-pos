@@ -49,7 +49,7 @@ async def create_order(db: AsyncSession, order: OrderCreate):
 
         await send_telegram_message(
             f"Order created on {db_order.table_name} with order id: {db_order.id} \nOn time: {db_order.start_time} \n\n"
-            f"{"The light was on" if not light_response["response"] else "The light turned on successfully"}",
+            f'{"The light was on" if not light_response["response"] else "The light turned on successfully"}',
         )
 
         return db_order
@@ -153,7 +153,7 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
                 f"\nTable price: {round_table_price} UZS"
                 f"\nProducts price: {db_order.total} UZS"
                 f"\n\nProducts: {', '.join(formatted_products + formatted_options)} \n\n"
-                f"{"The light was off" if not light_response["response"] else "The light turned off successfully"}",
+                f'{"The light was off" if not light_response["response"] else "The light turned off successfully"}',
             )
 
         db_order.status = order.status
