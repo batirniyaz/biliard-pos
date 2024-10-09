@@ -27,6 +27,8 @@ class OrderResponse(BaseModel):
     options: list = Field([], description="The options of the product")
     end_time: Optional[str] = Field(None, description="The end time of the order")
     duration: Optional[float] = Field(None, description="The duration of the order")
+    table_income: Optional[float] = Field(None, description="The income of the table")
+    products_income: Optional[float] = Field(None, description="The income of the products")
     total: Optional[float] = Field(None, description="The total price of the order")
     date: Optional[str] = Field(None, description="The date of the order")
     status: bool = Field(..., description="The status of the order")
