@@ -17,9 +17,13 @@ from app.utils.time_utils import get_time
 
 from app.menu.product.crud import get_product
 
+from app.integration.light.smar_swith import turn_off, turn_on
+
 
 async def create_order(db: AsyncSession, order: OrderCreate):
     try:
+        light_response = turn_on(order.table_id)
+
         table = await get_table(db, order.table_id)
         if not table.status:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Table is already occupied")
@@ -44,7 +48,9 @@ async def create_order(db: AsyncSession, order: OrderCreate):
         await db.refresh(table)
 
         await send_telegram_message(
-            f"Order created on {db_order.table_name} with order id: {db_order.id} \nOn time: {db_order.start_time}")
+            f"Order created on {db_order.table_name} with order id: {db_order.id} \nOn time: {db_order.start_time} \n\n"
+            f"{"The light was on" if not light_response["response"] else "The light turned on successfully"}",
+        )
 
         return db_order
     except Exception as e:
@@ -109,6 +115,8 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
 
         if not order.status:
 
+            light_response = turn_off(db_order.table_id)
+
             uzb_time = await get_time()
             db_order.end_time = uzb_time.strftime("%H:%M:%S")
             start_datetime_obj = datetime.strptime(f"{db_order.date} {db_order.start_time}", "%Y-%m-%d %H:%M:%S")
@@ -144,7 +152,8 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
                 f"\nDuration: {db_order.duration} minutes"
                 f"\nTable price: {round_table_price} UZS"
                 f"\nProducts price: {db_order.total} UZS"
-                f"\n\nProducts: {', '.join(formatted_products + formatted_options)}"
+                f"\n\nProducts: {', '.join(formatted_products + formatted_options)} \n\n"
+                f"{"The light was off" if not light_response["response"] else "The light turned off successfully"}",
             )
 
         db_order.status = order.status
@@ -219,4 +228,3 @@ async def cancel_order(db: AsyncSession, order_id: int, order: OrderUpdate):
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
