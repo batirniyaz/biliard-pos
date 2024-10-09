@@ -26,7 +26,10 @@ async def create_order(db: AsyncSession, order: OrderCreate):
 
         table.status = False
 
-        start_time, date, _ = await get_time()
+        uzb_time = await get_time()
+        date = uzb_time.strftime("%Y-%m-%d")
+        start_time = uzb_time.strftime("%H:%M:%S")
+
         db_order = Order(
             **order.model_dump(),
             start_time=start_time,
@@ -106,8 +109,8 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
 
         if not order.status:
 
-            db_order.end_time, _, uzb_time = await get_time()
-            start_time_obj = datetime.strptime(db_order.start_time, "%H:%M:%S")
+            uzb_time = await get_time()
+            db_order.end_time = uzb_time.strftime("%H:%M:%S")
             start_datetime_obj = datetime.strptime(f"{db_order.date} {db_order.start_time}", "%Y-%m-%d %H:%M:%S")
             end_datetime_obj = uzb_time
             db_order.duration = int((end_datetime_obj - start_datetime_obj).total_seconds() / 60)  # in minutes
