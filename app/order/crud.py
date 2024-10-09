@@ -116,6 +116,8 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
             round_table_price = ((total_duration + 499) // 500) * 500
             total_price += round_table_price
 
+            db_order.table_income = round_table_price
+
             table.status = True
             db_order.table_status = table.status
 
@@ -130,10 +132,11 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
             if end_date != db_order.date:
                 changed_status = True
 
+            db_order.products_income = db_order.total
             await send_telegram_message(
                 f"Order ended on {db_order.table_name} with order id: {db_order.id}"
                 f"\n\nTotal price: {total_price} UZS"
-                f"\nStart time: {db_order.start_time if not changed_status else db_order.date, db_order.start_time} "
+                f"\nStart time: {db_order.start_time if not changed_status else (db_order.date, db_order.start_time)} "
                 f"\t End time: {db_order.end_time}"
                 f"\nDuration: {db_order.duration} minutes"
                 f"\nTable price: {round_table_price} UZS"
@@ -149,6 +152,8 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
         flag_modified(db_order, "products")
         flag_modified(db_order, "total")
         flag_modified(table, "status")
+        flag_modified(db_order, "products_income")
+        flag_modified(db_order, "table_income")
 
         await db.commit()
         await db.refresh(db_order)
