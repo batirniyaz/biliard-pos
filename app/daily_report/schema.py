@@ -40,6 +40,8 @@ class TableReportCreate(BaseModel):
     table_id: int = Field(..., title="Table ID")
     total_income: int = Field(..., title="Total Income")
     total_play_time: int = Field(..., title="Total Play Time")
+    table_income: int = Field(..., title="Table Income")
+    products_income: Optional[int] = Field(None, title="Product Income")
 
 
 class TableReportResponse(TableReportCreate):
