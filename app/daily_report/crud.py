@@ -110,6 +110,7 @@ async def calculate_table_report(db):
         db_table_report = TableReport(
             date=res_table["date"],
             table_id=table.id,
+            table_name=table.name,
             products=res_table["products"],
             table_income=res_table["table_income"],
             products_income=res_table["product_income"],
