@@ -1,8 +1,12 @@
 from datetime import datetime
 import time
+import pytz
 
 import ntplib
 from fastapi import HTTPException, status
+
+
+SAMARKAND_TZ = pytz.timezone("Asia/Samarkand")
 
 
 async def get_time():
@@ -10,13 +14,11 @@ async def get_time():
         client = ntplib.NTPClient()
         response = client.request('uz.pool.ntp.org', version=3)
         uzb_time = time.localtime(response.tx_time)
-        time_string = time.strftime("%H:%M:%S", uzb_time)
-        date = time.strftime("%Y-%m-%d", uzb_time)
         uzb_time = datetime.fromtimestamp(time.mktime(uzb_time))
-        return time_string, date, uzb_time
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail="Failed to get time from NTP server")
+        return uzb_time
+    except Exception as e:
+        print("Failed to get time from NTP server")
+        return datetime.now(SAMARKAND_TZ)
 
 
 def get_time_sync():
@@ -26,6 +28,6 @@ def get_time_sync():
         uzb_time = time.localtime(response.tx_time)
         uzb_datetime = datetime.fromtimestamp(time.mktime(uzb_time))
         return uzb_datetime
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail="Failed to get time from NTP server")
+    except Exception as e:
+        print("Failed to get time from NTP server")
+        return datetime.now(SAMARKAND_TZ)
