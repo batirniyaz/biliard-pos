@@ -9,11 +9,11 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from app.bot.main import send_telegram_message
 from app.menu.option.crud import get_option
-from app.menu.product.model import Product
 from app.order.model import Order
 from app.order.schema import OrderCreate, OrderUpdate
-from app.table.crud import get_table, update_table
+from app.table.crud import get_table
 from app.utils.time_utils import get_time
+from app.utils.check_util import print_check
 
 from app.menu.product.crud import get_product
 
@@ -156,6 +156,8 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
                 f'{"The light was off" if not light_response["response"] else "The light turned off successfully"}',
             )
 
+        check = print_check(db_order)
+
         db_order.status = order.status
 
         db_order.total = total_price
@@ -171,7 +173,7 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
         await db.refresh(db_order)
         await db.refresh(table)
 
-        return db_order
+        return db_order, check
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
