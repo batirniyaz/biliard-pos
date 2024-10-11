@@ -22,6 +22,7 @@ async def create_table_endpoint(
 
 
 @router.get("/all", response_model=List[TableResponse])
+@cache(expire=60)
 async def get_all_tables_endpoint(
         db=Depends(get_async_session)
 ):
