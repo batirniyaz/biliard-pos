@@ -17,12 +17,12 @@ from app.utils.check_util import print_check
 
 from app.menu.product.crud import get_product
 
-from app.integration.light.smar_swith import turn_off, turn_on
+# from app.integration.light.smar_swith import turn_off, turn_on
 
 
 async def create_order(db: AsyncSession, order: OrderCreate):
     try:
-        light_response = turn_on(order.table_id)
+        # light_response = turn_on(order.table_id)
 
         table = await get_table(db, order.table_id)
         if not table.status:
@@ -49,7 +49,7 @@ async def create_order(db: AsyncSession, order: OrderCreate):
 
         await send_telegram_message(
             f"Order created on {db_order.table_name} with order id: {db_order.id} \nOn time: {db_order.start_time} \n\n"
-            f'{"The light was on" if not light_response["response"] else "The light turned on successfully"}',
+            # f'{"The light was on" if not light_response["response"] else "The light turned on successfully"}',
         )
 
         return db_order
@@ -115,7 +115,7 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
 
         if not order.status:
 
-            light_response = turn_off(db_order.table_id)
+            # light_response = turn_off(db_order.table_id)
 
             uzb_time = await get_time()
             db_order.end_time = uzb_time.strftime("%H:%M:%S")
@@ -153,12 +153,12 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
                 f"\nTable price: {round_table_price} UZS"
                 f"\nProducts price: {db_order.total} UZS"
                 f"\n\nProducts: {', '.join(formatted_products + formatted_options)} \n\n"
-                f'{"The light was off" if not light_response["response"] else "The light turned off successfully"}',
+                # f'{"The light was off" if not light_response["response"] else "The light turned off successfully"}',
             )
 
-        check = print_check(db_order)
-
         db_order.status = order.status
+
+        check = print_check(db_order)
 
         db_order.total = total_price
 
@@ -173,7 +173,7 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
         await db.refresh(db_order)
         await db.refresh(table)
 
-        return db_order, check
+        return db_order
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
