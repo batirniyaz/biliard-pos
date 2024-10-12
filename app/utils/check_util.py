@@ -6,24 +6,28 @@ from app.order.model import Order
 
 
 def print_check(db_order):
+    print("I am in print_check")
     try:
         if not db_order.status:
 
+            print("start products")
             json_products = []
             for product in db_order.products:
                 json_products.append({
-                    "product_id": product.id,
-                    "product_name": product.name,
-                    "price": product.price,
+                    "product_id": product["product_id"],
+                    "product_name": product["product_name"],
+                    "price": product["price"],
                 })
+            print("after products")
 
             json_options = []
             for option in db_order.options:
                 json_options.append({
-                    "option_id": option.id,
-                    "option_name": option.name,
-                    "price": option.price,
+                    "option_id": option["option_id"],
+                    "option_name": option["option_name"],
+                    "price": option["price"],
                 })
+            print("after options")
 
             json_order = {
                 "id": db_order.id,
@@ -43,6 +47,7 @@ def print_check(db_order):
                 "status": db_order.status,
             }
 
+            print("going to prn_txt")
             check = prn_txt(json_order)
             return check
     except Exception as e:
@@ -50,6 +55,7 @@ def print_check(db_order):
 
 
 async def check_helper(db: AsyncSession, order_id: int):
+    print("I am in check_helper")
     from app.order.crud import get_order
 
     db_order = await get_order(db, order_id)

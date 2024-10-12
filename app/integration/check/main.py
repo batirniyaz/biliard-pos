@@ -48,7 +48,8 @@ def format_order(order):
 
 
 def prn_txt(order, printer_name="XP-58"):
-    pass
+    print("I am in prn_txt")
+    return {"it works": order}
 
 # def prn_txt(order, printer_name="XP-58"):
 #     if printer_name is None:
