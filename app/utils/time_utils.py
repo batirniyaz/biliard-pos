@@ -3,7 +3,6 @@ import time
 import pytz
 
 import ntplib
-from fastapi import HTTPException, status
 
 
 SAMARKAND_TZ = pytz.timezone("Asia/Samarkand")
@@ -18,7 +17,7 @@ async def get_time():
         return uzb_time
     except Exception as e:
         print("Failed to get time from NTP server")
-        return datetime.now(SAMARKAND_TZ)
+        return datetime.now(SAMARKAND_TZ).replace(tzinfo=None)
 
 
 def get_time_sync():
@@ -30,4 +29,4 @@ def get_time_sync():
         return uzb_datetime
     except Exception as e:
         print("Failed to get time from NTP server")
-        return datetime.now(SAMARKAND_TZ)
+        return datetime.now(SAMARKAND_TZ).replace(tzinfo=None)
