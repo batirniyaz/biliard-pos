@@ -40,6 +40,22 @@ async def get_table_report(db: AsyncSession, date: str, table_id: Optional[int] 
 
 
 def serialize_order(order):
+    json_products = []
+    for product in order.products:
+        json_products.append({
+            "product_id": product.id,
+            "product_name": product.name,
+            "price": product.price,
+        })
+
+    json_options = []
+    for option in order.options:
+        json_options.append({
+            "option_id": option.id,
+            "option_name": option.name,
+            "price": option.price,
+        })
+
     return {
         "id": order.id,
         "date": order.date,
@@ -47,8 +63,8 @@ def serialize_order(order):
         "products_income": order.products_income,
         "total": order.total,
         "duration": order.duration,
-        "products": order.products,
-        "options": order.options,
+        "products": json_products,
+        "options": json_options,
         "table_id": order.table_id,
         "table_name": order.table_name,
         "table_price": order.table_price,
