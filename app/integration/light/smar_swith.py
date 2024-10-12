@@ -57,10 +57,12 @@ class TuyaDeviceManager:
             return {'error': str(e)}
 
     def turn_on(self, device_id):
-        return self.handle_device_action(device_id, 'turn_on')
+        # return self.handle_device_action(device_id, 'turn_on')
+        return {'status': False}
 
     def turn_off(self, device_id):
-        return self.handle_device_action(device_id, 'turn_off')
+        # return self.handle_device_action(device_id, 'turn_off')
+        return {'status': False}
 
     def get_status(self, device_id):
         try:
