@@ -210,7 +210,7 @@ async def cancel_order(db: AsyncSession, order_id: int, order: OrderUpdate):
                 if product["product_id"] == product_id:
                     db_product = await get_product(db, product_id)
                     db_order.products.remove(product)
-                    db_order.total -= db_product.price
+                    db_order.products_income -= db_product.price
                     break
 
         for option_id in order.options:
@@ -218,7 +218,7 @@ async def cancel_order(db: AsyncSession, order_id: int, order: OrderUpdate):
                 if option["option_id"] == option_id:
                     db_option = await get_option(db, option_id)
                     db_order.options.remove(option)
-                    db_order.total -= db_option.price
+                    db_order.products_income -= db_option.price
                     break
 
         flag_modified(db_order, "products")
