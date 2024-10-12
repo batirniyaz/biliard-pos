@@ -17,18 +17,19 @@ from app.utils.check_util import print_check
 
 from app.menu.product.crud import get_product
 
-# from app.integration.light.smar_swith import turn_off, turn_on
+from app.integration.light.smar_swith import light
 
 
 async def create_order(db: AsyncSession, order: OrderCreate):
     try:
-        # light_response = turn_on(order.table_id)
+        light_response = light.turn_on(order.table_id)
 
         table = await get_table(db, order.table_id)
         if not table.status:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Table is already occupied")
 
         table.status = False
+        flag_modified(table, "status")
 
         uzb_time = await get_time()
         date = uzb_time.strftime("%Y-%m-%d")
@@ -48,8 +49,8 @@ async def create_order(db: AsyncSession, order: OrderCreate):
         await db.refresh(table)
 
         await send_telegram_message(
-            f"Order created on {db_order.table_name} with order id: {db_order.id} \nOn time: {db_order.start_time} \n\n"
-            # f'{"The light was on" if not light_response["response"] else "The light turned on successfully"}',
+            f"Заказ создан на {db_order.table_name} с идентификатором заказа: {db_order.id} \nВо время: {db_order.start_time} \n\n"
+            f'{"Свет был включен" if "status" in light_response and light_response["status"] else "Свет успешно включился"}',
         )
 
         return db_order
@@ -84,16 +85,12 @@ async def get_order(db: AsyncSession, order_id: int):
 
 async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
     try:
-        # if not order.status:
-        #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order is already ended")
 
         db_order = await get_order(db, order_id)
         table = await get_table(db, db_order.table_id)
 
         if table.status:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Table is not occupied")
-
-        total_price = db_order.total
 
         for product in order.products:
             db_product = await get_product(db, product)
@@ -102,7 +99,7 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
                 "product_name": db_product.name,
                 "price": db_product.price
             })
-            total_price += db_product.price
+            db_order.products_income += db_product.price
 
         for option in order.options:
             db_option = await get_option(db, option)
@@ -111,12 +108,13 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
                 "option_name": db_option.name,
                 "price": db_option.price
             })
-            total_price += db_option.price
+            db_order.products_income += db_option.price
 
         if not order.status:
 
-            # light_response = turn_off(db_order.table_id)
+            light_response = light.turn_off(db_order.table_id)
 
+            # Calculate end time, duration and table income
             uzb_time = await get_time()
             db_order.end_time = uzb_time.strftime("%H:%M:%S")
             start_datetime_obj = datetime.strptime(f"{db_order.date} {db_order.start_time}", "%Y-%m-%d %H:%M:%S")
@@ -125,42 +123,46 @@ async def update_order(db: AsyncSession, order_id: int, order: OrderUpdate):
             price_per_minutes = int(table.price / 60)  # price per minute
             total_duration = db_order.duration * price_per_minutes
             round_table_price = ((total_duration + 499) // 500) * 500
-            total_price += round_table_price
+            # Ending calculation
 
-            db_order.table_income = round_table_price
-
-            table.status = True
-            db_order.table_status = table.status
-
+            # Calculate and formate products and options
             product_counts = Counter([product['product_name'] for product in db_order.products])
             option_counts = Counter([option['option_name'] for option in db_order.options])
 
             formatted_products = [f"{product} x{count}" for product, count in product_counts.items()]
             formatted_options = [f"{option} x{count}" for option, count in option_counts.items()]
+            # End calculation
 
             changed_status = False
             end_date = uzb_time.strftime("%Y-%m-%d")
             if end_date != db_order.date:
                 changed_status = True
 
-            db_order.products_income = db_order.total
+            # Update db model
+            table.status = True
+            db_order.table_status = True
+            db_order.total += db_order.products_income
+            db_order.table_income = round_table_price
+            db_order.total += round_table_price
+            # End update db model
+
+            # Send message to telegram
             await send_telegram_message(
-                f"Order ended on {db_order.table_name} with order id: {db_order.id}"
-                f"\n\nTotal price: {total_price} UZS"
-                f"\nStart time: {db_order.start_time if not changed_status else (db_order.date, db_order.start_time)} "
-                f"\t End time: {db_order.end_time}"
-                f"\nDuration: {db_order.duration} minutes"
-                f"\nTable price: {round_table_price} UZS"
-                f"\nProducts price: {db_order.total} UZS"
-                f"\n\nProducts: {', '.join(formatted_products + formatted_options)} \n\n"
-                # f'{"The light was off" if not light_response["response"] else "The light turned off successfully"}',
+                f"Заказ завершен на {db_order.table_name} с идентификатором заказа: {db_order.id}"
+                f"\n\nОбщая стоимость: {db_order.total} UZS"
+                f"\nВремя начала: {db_order.start_time if not changed_status else (db_order.date, db_order.start_time)} "
+                f"\tВремя окончания: {db_order.end_time}"
+                f"\nПродолжительность: {db_order.duration} минут"
+                f"\nЦена Стола: {round_table_price} UZS"
+                f"\nЦена продуктов: {db_order.products_income} UZS"
+                f"\n\nПродукты: {', '.join(formatted_products + formatted_options)} \n\n"
+                f'{"Свет был выключен" if "status" in light_response and not light_response["status"] else "Свет успешно выключился"}',
             )
+            # End send message to telegram
 
         db_order.status = order.status
 
         check = print_check(db_order)
-
-        db_order.total = total_price
 
         flag_modified(db_order, "options")
         flag_modified(db_order, "products")
