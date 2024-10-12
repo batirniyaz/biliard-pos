@@ -9,6 +9,22 @@ def print_check(db_order):
     try:
         if not db_order.status:
 
+            json_products = []
+            for product in db_order.products:
+                json_products.append({
+                    "product_id": product.id,
+                    "product_name": product.name,
+                    "price": product.price,
+                })
+
+            json_options = []
+            for option in db_order.options:
+                json_options.append({
+                    "option_id": option.id,
+                    "option_name": option.name,
+                    "price": option.price,
+                })
+
             json_order = {
                 "id": db_order.id,
                 "table_id": db_order.table_id,
@@ -16,8 +32,8 @@ def print_check(db_order):
                 "table_price": db_order.table_price,
                 "table_status": db_order.table_status,
                 "start_time": db_order.start_time,
-                "products": db_order.products,
-                "options": db_order.options,
+                "products": json_products,
+                "options": json_options,
                 "end_time": db_order.end_time,
                 "duration": db_order.duration,
                 "table_income": db_order.table_income,
