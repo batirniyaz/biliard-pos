@@ -1,0 +1,86 @@
+[
+    {
+        "name": "WiFi Breaker L",
+        "id": "bfd256167b549ae3e5kt0g",
+        "key": "1Eh;8BmOtzyDP$h*",
+        "mac": "b8:06:0d:7d:92:b4",
+        "uuid": "3b1aab933741f008",
+        "category": "tdq",
+        "product_name": "WiFi Breaker L",
+        "product_id": "f8kijeaiapyq69fx",
+        "biz_type": 18,
+        "model": "WiFi Breaker L",
+        "sub": false,
+        "icon": "https://images.tuyaeu.com/smart/icon/ay15522876175557bVit/454bd741f7d6048e4b762a0f4b38a5c4.png",
+        "mapping": {
+            "1": {
+                "code": "switch_1",
+                "type": "Boolean",
+                "values": {}
+            },
+            "9": {
+                "code": "countdown_1",
+                "type": "Integer",
+                "values": {
+                    "unit": "s",
+                    "min": 0,
+                    "max": 86400,
+                    "scale": 0,
+                    "step": 1
+                }
+            },
+            "24": {
+                "code": "test_bit",
+                "type": "Integer",
+                "values": {
+                    "min": 0,
+                    "max": 5,
+                    "scale": 0,
+                    "step": 1
+                }
+            },
+            "29": {
+                "code": "fault",
+                "type": "Bitmap",
+                "values": {
+                    "label": [
+                        "ov_cr",
+                        "ov_vol",
+                        "ov_pwr",
+                        "ls_cr",
+                        "ls_vol",
+                        "ls_pow"
+                    ]
+                }
+            },
+            "38": {
+                "code": "relay_status",
+                "type": "Enum",
+                "values": {
+                    "range": [
+                        "0",
+                        "1",
+                        "2"
+                    ]
+                }
+            },
+            "42": {
+                "code": "random_time",
+                "type": "String",
+                "values": "{\"maxlen\":255}"
+            },
+            "43": {
+                "code": "cycle_time",
+                "type": "String",
+                "values": "{\"maxlen\":255}"
+            },
+            "44": {
+                "code": "switch_inching",
+                "type": "String",
+                "values": "{\"maxlen\":255}"
+            }
+        },
+        "ip": "192.168.0.191",
+        "version": "3.4"
+    }
+]
