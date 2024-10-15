@@ -10,7 +10,6 @@ from app.auth.database import get_async_session, User
 from app.menu.product.crud import create_product, get_products, get_product, update_product, delete_product
 from app.menu.product.schema import ProductCreate, ProductUpdate, ProductResponse
 
-from fastapi_cache.decorator import cache
 
 router = APIRouter()
 
@@ -41,7 +40,6 @@ async def create_product_endpoint(
 
 
 @router.get("/")
-@cache(expire=60)
 async def get_products_endpoint(
         db: AsyncSession = Depends(get_async_session),
         current_user: User = Depends(current_active_user)
@@ -52,7 +50,6 @@ async def get_products_endpoint(
 
 
 @router.get("/{product_id}")
-@cache(expire=60)
 async def get_product_endpoint(
         product_id: int,
         db: AsyncSession = Depends(get_async_session),

@@ -8,7 +8,6 @@ from app.auth.database import get_async_session, User
 from app.menu.option.crud import create_option, get_options, get_option, update_option, delete_option
 from app.menu.option.schema import OptionCreate, OptionUpdate, OptionResponse
 
-from fastapi_cache.decorator import cache
 
 router = APIRouter()
 
@@ -26,7 +25,6 @@ async def create_option_endpoint(
 
 
 @router.get("/", )
-@cache(expire=60)
 async def get_options_endpoint(
         db: AsyncSession = Depends(get_async_session),
         current_user: User = Depends(current_active_user)
@@ -37,7 +35,6 @@ async def get_options_endpoint(
 
 
 @router.get("/{option_id}")
-@cache(expire=60)
 async def get_option_endpoint(
         option_id: int,
         db: AsyncSession = Depends(get_async_session),

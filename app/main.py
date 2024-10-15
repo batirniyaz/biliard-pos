@@ -10,20 +10,12 @@ from app import router
 
 from app.auth.database import create_db_and_tables
 
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
-from redis import asyncio as aioredis
-
-from app.config import REDIS_HOST, REDIS_PORT
 from app.utils.status_check import start_periodic_tasks
 
 
 @asynccontextmanager
 async def lifespan(main_app: FastAPI):
     await create_db_and_tables()
-
-    redis = aioredis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}", encoding="utf-8", decode_responses=True)
-    FastAPICache.init(RedisBackend(redis), prefix="biliard-cache")
 
     task = asyncio.create_task(start_periodic_tasks())
 

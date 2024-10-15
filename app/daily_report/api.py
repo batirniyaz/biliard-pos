@@ -1,7 +1,6 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, HTTPException
-from fastapi_cache.decorator import cache
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
@@ -14,7 +13,6 @@ router = APIRouter()
 
 
 @router.get("/daily")
-@cache(expire=60)
 async def get_daily_report_endpoint(
         date: str = Query(
             ...,
@@ -30,7 +28,6 @@ async def get_daily_report_endpoint(
 
 
 @router.get("/table")
-@cache(expire=60)
 async def get_table_report_endpoint(
         date: str = Query(
             ...,
@@ -57,7 +54,6 @@ async def close_session_endpoint(
 
 
 @router.get("/session_history")
-@cache(expire=60)
 async def session_history_endpoint(
         db: AsyncSession = Depends(get_async_session),
         current_user: User = Depends(current_active_user)

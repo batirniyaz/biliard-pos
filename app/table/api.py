@@ -1,7 +1,6 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi_cache.decorator import cache
 
 from app.auth.auth_backend import current_active_user
 from app.table.crud import get_all_tables, get_table, create_table, update_table, delete_table, get_tables
@@ -26,7 +25,6 @@ async def create_table_endpoint(
 
 
 @router.get("/all", response_model=List[TableResponse])
-@cache(expire=60)
 async def get_all_tables_endpoint(
         db=Depends(get_async_session),
         current_user: User = Depends(current_active_user)
@@ -40,7 +38,6 @@ async def get_all_tables_endpoint(
 
 
 @router.get("/", response_model=List[TableResponse])
-@cache(expire=60)
 async def get_tables_endpoint(
         db=Depends(get_async_session),
         current_user: User = Depends(current_active_user)
@@ -54,7 +51,6 @@ async def get_tables_endpoint(
 
 
 @router.get("/{table_id}", response_model=TableResponse)
-@cache(expire=60)
 async def get_table_endpoint(
         table_id: int,
         db=Depends(get_async_session),
